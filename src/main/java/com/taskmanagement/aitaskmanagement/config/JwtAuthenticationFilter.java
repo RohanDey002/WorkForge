@@ -37,19 +37,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final  String authHeader = request.getHeader("AUTHORIZATION");
 
+        System.out.println("Authorization Header:"+ authHeader);
+
         if(authHeader==null|| !authHeader.startsWith("Bearer ")){
+            System.out.println("No Bearer token found");
             filterChain.doFilter(request,response);
             return;
         }
 
         final  String jwt = authHeader.substring(7);
+        System.out.println("JWT received");
 
         String userEmail;
 
         try {
 
             userEmail=jwtService.extractUsername(jwt);
+            System.out.println(
+                    "Username extracted from JWT: " + userEmail
+            );
         }catch (Exception exception){
+            System.out.println(
+                    "JWT extraction failed: "
+                            + exception.getMessage()
+            );
+            exception.printStackTrace();
 
             filterChain.doFilter(request,response);
             return;
@@ -61,12 +73,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails;
             try {
                 userDetails = userDetailsService.loadUserByUsername(userEmail);
+                System.out.println(
+                        "User loaded: "
+                                + userDetails.getUsername()
+                );
             }catch (Exception exception){
+                System.out.println(
+                        "User loading failed: "
+                                + exception.getMessage()
+                );
+
+                exception.printStackTrace();
                 filterChain.doFilter(request,response);
                 return;
             }
 
             if(jwtService.isTokenValid(jwt,userDetails)){
+                System.out.println("JWT IS VALID");
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails,
                                 null,
@@ -79,7 +102,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder
                         .getContext()
                         .setAuthentication(authenticationToken);
+                System.out.println(
+                        "Authentication set: "
+                                + SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                );
 
+                System.out.println(
+                        "Authorities: "
+                                + authenticationToken.getAuthorities()
+                );
+
+            }else {
+                System.out.println("JWT IS INVALID");
             }
         }
 

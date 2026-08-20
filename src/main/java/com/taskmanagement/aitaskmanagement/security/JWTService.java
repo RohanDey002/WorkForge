@@ -15,7 +15,7 @@ import java.util.function.Function;
 @Service
 public class JWTService {
 
-    private  String secrete_key = "$$this^is//the_-login=+key";
+    private  String secrete_key = "this888is999the777login666keyFORTHEPROJECTTASKMANAGEMENT";
 
     private  long expiration = 86400000;
 

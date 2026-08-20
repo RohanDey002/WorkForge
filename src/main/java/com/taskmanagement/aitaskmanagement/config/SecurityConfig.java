@@ -53,15 +53,15 @@ public class SecurityConfig {
 
                                 .requestMatchers(
                                         "/api/admin/**"
-                                ).hasRole("ADMIN")
+                                ).hasRole("Admin")
 
                                 .requestMatchers(
                                         "/api/manager/**"
-                                ).hasRole("MANAGER")
+                                ).hasRole("Manager")
 
                                 .requestMatchers(
                                         "/api/employee/**"
-                                ).hasRole("EMPLOYEE")
+                                ).hasRole("Employee")
 
                                 .anyRequest()
                                 .authenticated()
@@ -82,7 +82,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    private CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration corsConfiguration = new CorsConfiguration();
 
