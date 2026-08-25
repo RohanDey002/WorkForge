@@ -3,6 +3,8 @@ package com.taskmanagement.aitaskmanagement.DTO.request;
 import com.taskmanagement.aitaskmanagement.entity.Priority;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -14,13 +16,13 @@ public class TaskRequest {
 
     private String description;
 
-    @NotBlank(message = "Priority is required")
+    @NotNull(message = "Priority is required")
     private Priority priority;
 
-    @NotBlank(message = "Due date is required")
+    @NotNull(message = "Due date is required")
     @FutureOrPresent(message = "Due date cannot be past")
     private LocalDate dueDate;
 
-    @NotBlank(message = "Employee ID is required")
+    @NotNull(message = "Employee ID is required")
     private Long employeeId;
 }

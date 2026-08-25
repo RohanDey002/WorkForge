@@ -30,7 +30,7 @@ public class EmployeeController {
     @PutMapping("/tasks/{taskId}/status")
     public ResponseEntity<TaskResponse> updateTasks(
             @PathVariable Long taskId ,
-            @Valid UpdateTaskStatus request
+            @Valid @RequestBody UpdateTaskStatus request
             ){
 
         TaskResponse taskResponse = employeeService.updateTask(taskId, request.getStatus());
