@@ -26,6 +26,7 @@ public enum Role {
     private final Set<Permissions> permissions;
 
     Role(Set<Permissions> permissions) {
+
         this.permissions = permissions;
     }
 }

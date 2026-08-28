@@ -60,7 +60,7 @@ public class SecurityConfig {
                                 ).hasRole("Manager")
 
                                 .requestMatchers(
-                                        "/api/employee/**"
+                                        "/api/employees/**"
                                 ).hasRole("Employee")
 
                                 .anyRequest()
