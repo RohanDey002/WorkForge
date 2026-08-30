@@ -4,8 +4,10 @@ import com.taskmanagement.aitaskmanagement.DTO.request.LoginRequest;
 import com.taskmanagement.aitaskmanagement.DTO.response.AuthResponse;
 import com.taskmanagement.aitaskmanagement.DTO.response.AuthResult;
 import com.taskmanagement.aitaskmanagement.DTO.response.JwtResponse;
+import com.taskmanagement.aitaskmanagement.Redis.session.RedisSessionService;
 import com.taskmanagement.aitaskmanagement.Util.CookiesUtil;
 import com.taskmanagement.aitaskmanagement.exception.UnauthorizedException;
+import com.taskmanagement.aitaskmanagement.security.JWTService;
 import com.taskmanagement.aitaskmanagement.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +30,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final CookiesUtil cookiesUtil;
+    private final JWTService jwtService;
+    private final RedisSessionService redisSessionService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request){
@@ -90,9 +94,26 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logout(){
+    public ResponseEntity<AuthResponse> logout(HttpServletRequest request){
+
+        String refreshToken  = extractRefreshToken(request);
+
+        if(refreshToken!=null){
+
+            try {
+                String sessionId = jwtService.extractSessionId(refreshToken);
+
+                redisSessionService.revokeSession(sessionId);
+
+            }catch (Exception exception){
+
+            }
+
+        }
+
 
         ResponseCookie accessCookie = cookiesUtil.deleteAccessToken();
+
         ResponseCookie responseCookie = cookiesUtil.deleteRefreshToken();
 
         AuthResponse response = AuthResponse.builder()

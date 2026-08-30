@@ -41,7 +41,10 @@ public class JWTService {
 
     }
 
-    public  String generateRefreshToken(UserDetails userDetails , long sessionStart){
+    public  String generateRefreshToken(UserDetails userDetails ,
+                                        long sessionStart,
+                                        String  sessionId){
+
         long currentTime = System.currentTimeMillis();
 
         long absoluteExpiration = sessionStart+refreshMaxExpiration;
@@ -49,6 +52,7 @@ public class JWTService {
         long refreshExpirationTime = Math.min(currentTime+refreshIdleExpiration,absoluteExpiration);
 
         return Jwts.builder()
+                .id(sessionId)
                 .subject(userDetails.getUsername())
                 .claim("type","REFRESH")
                 .claim("sessionStart",sessionStart)
@@ -59,10 +63,10 @@ public class JWTService {
 
     }
 
-    public String generateInitialRefreshToken(UserDetails userDetails){
+    public String generateInitialRefreshToken(UserDetails userDetails, String sessionId){
         long currentTime  = System.currentTimeMillis();
 
-        return generateRefreshToken(userDetails,currentTime);
+        return generateRefreshToken(userDetails,currentTime,sessionId);
     }
 
 
@@ -98,6 +102,10 @@ public class JWTService {
                 claims -> claims.get("sessionStart", Long.class));
     }
 
+    public String extractSessionId(String token){
+        return extractClaim(token,Claims::getId);
+    }
+
     public  Date extractExpiration(String token){
 
         return extractClaim(token,Claims::getExpiration);
@@ -106,6 +114,10 @@ public class JWTService {
     public boolean  isTokenExpired(String token){
         return extractExpiration(token)
                 .before(new Date());
+    }
+
+    public Long getRefreshMaxExpiration(){
+        return refreshMaxExpiration;
     }
 
     public boolean isAccessTokenValid(String token, UserDetails userDetails){
