@@ -1,6 +1,8 @@
 package com.taskmanagement.aitaskmanagement.service;
 
 import com.taskmanagement.aitaskmanagement.DTO.response.TaskResponse;
+import com.taskmanagement.aitaskmanagement.Redis.cacheService.EmployeeCacheService;
+import com.taskmanagement.aitaskmanagement.Redis.cacheService.ManagerCacheService;
 import com.taskmanagement.aitaskmanagement.entity.Task;
 import com.taskmanagement.aitaskmanagement.entity.TaskStatus;
 import com.taskmanagement.aitaskmanagement.entity.User;
@@ -20,15 +22,14 @@ import java.util.List;
 public class EmployeeService {
 
     private final TaskRepository taskRepository;
+    private final EmployeeCacheService employeeCacheService;
+    private final ManagerCacheService managerCacheService;
 
     public List<TaskResponse> getMyTasks(){
 
         User employee = getCurrentUser();
 
-        return taskRepository.findByAssignedTo(employee)
-                .stream()
-                .map(this::mapToTaskResponse)
-                .toList();
+        return employeeCacheService.getEmployeeTasks(employee.getId());
     }
 
     public TaskResponse updateTask(Long taskid, String status){
@@ -57,6 +58,11 @@ public class EmployeeService {
         task.setStatus(taskStatus);
 
         Task updatedTask = taskRepository.save(task);
+
+        employeeCacheService.evictEmployeeTask(employee.getId());
+
+        managerCacheService.evictTasks(employee.getManager().getId());
+
 
         return mapToTaskResponse(updatedTask);
 

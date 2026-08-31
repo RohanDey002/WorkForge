@@ -3,6 +3,9 @@ package com.taskmanagement.aitaskmanagement.service;
 import com.taskmanagement.aitaskmanagement.DTO.request.RegisterEmployeeRequest;
 import com.taskmanagement.aitaskmanagement.DTO.request.RegisterManagerRequest;
 import com.taskmanagement.aitaskmanagement.DTO.response.UserResponse;
+import com.taskmanagement.aitaskmanagement.Redis.cacheService.AdminCacheService;
+import com.taskmanagement.aitaskmanagement.Redis.cacheService.EmployeeCacheService;
+import com.taskmanagement.aitaskmanagement.Redis.cacheService.ManagerCacheService;
 import com.taskmanagement.aitaskmanagement.entity.Role;
 import com.taskmanagement.aitaskmanagement.entity.User;
 import com.taskmanagement.aitaskmanagement.exception.BadRequestException;
@@ -20,6 +23,9 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AdminCacheService adminCacheService;
+    private final ManagerCacheService managerCacheService;
+    private final EmployeeCacheService employeeCacheService;
 
     public UserResponse createManager(RegisterManagerRequest request){
 
@@ -33,6 +39,9 @@ public class AdminService {
                 .role(Role.Manager)
                 .build();
         User savedManager = userRepository.save(manager);
+
+        adminCacheService.evictUsers();
+
         return mapToUserResponse(savedManager);
     }
 
@@ -58,14 +67,15 @@ public class AdminService {
 
         User savedEmployee = userRepository.save(employee);
 
+        managerCacheService.evictEmployees(manager.getId());
+
+        adminCacheService.evictUsers();
+
         return mapToUserResponse(savedEmployee);
     }
    public  List<UserResponse> getAllUsers(){
 
-      return   userRepository.findAll()
-                .stream()
-                .map(this::mapToUserResponse)
-                .toList();
+     return adminCacheService.getAllUsers();
    }
 
    public void deleteUser(Long userId){
@@ -74,7 +84,22 @@ public class AdminService {
                         .orElseThrow(()->
                                 new ResourceNotFoundException("User not found with ID:"+userId));
 
+
+
         userRepository.delete(user);
+
+        adminCacheService.evictUsers();
+
+        if(user.getManager()!=null){
+
+            managerCacheService.getEmployees(user.getManager().getId());
+            employeeCacheService.evictEmployeeTask(userId);
+        }
+
+        if(user.getRole()==Role.Manager){
+            managerCacheService.evictTasks(userId);
+            managerCacheService.evictEmployees(userId);
+        }
 
    }
 

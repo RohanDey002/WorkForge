@@ -3,6 +3,8 @@ package com.taskmanagement.aitaskmanagement.service;
 import com.taskmanagement.aitaskmanagement.DTO.request.TaskRequest;
 import com.taskmanagement.aitaskmanagement.DTO.response.TaskResponse;
 import com.taskmanagement.aitaskmanagement.DTO.response.UserResponse;
+import com.taskmanagement.aitaskmanagement.Redis.cacheService.EmployeeCacheService;
+import com.taskmanagement.aitaskmanagement.Redis.cacheService.ManagerCacheService;
 import com.taskmanagement.aitaskmanagement.entity.Role;
 import com.taskmanagement.aitaskmanagement.entity.Task;
 import com.taskmanagement.aitaskmanagement.entity.TaskStatus;
@@ -25,6 +27,8 @@ public class ManagerService {
 
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
+    private final ManagerCacheService managerCacheService;
+    private final EmployeeCacheService employeeCacheService;
 
     public TaskResponse assignTask(TaskRequest request){
         User manager = getCurretUser();
@@ -57,6 +61,11 @@ public class ManagerService {
 
         Task savedtask = taskRepository.save(task);
 
+        employeeCacheService.evictEmployeeTask(employee.getId());
+
+        managerCacheService.evictTasks(manager.getId());
+
+
         return mapToTaskResponse(savedtask);
 
     }
@@ -65,18 +74,13 @@ public class ManagerService {
 
         User manager = getCurretUser();
 
-        return taskRepository.findByAssignedBy(manager)
-                .stream()
-                .map(this::mapToTaskResponse)
-                .toList();
+        return managerCacheService.getTasks(manager.getId());
     }
 
     public List<UserResponse> getEmployees(){
         User manager = getCurretUser();
-        return userRepository.findByManager(manager)
-                .stream()
-                .map(this::mapToUserResponse)
-                .toList();
+
+        return managerCacheService.getEmployees(manager.getId());
     }
 
     private User getCurretUser(){

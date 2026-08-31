@@ -12,7 +12,9 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
 
     List<Task> findByAssignedTo(User employee);
 
-    List<Task> findByAssignedBy(User manager);
+    List<Task> findByAssignedById(Long managerId);
+
+    List<Task> findByAssignedToId(Long employeeId);
 
     List<Task> findByAssignedToAndStatus(User employee, TaskStatus status);
 
