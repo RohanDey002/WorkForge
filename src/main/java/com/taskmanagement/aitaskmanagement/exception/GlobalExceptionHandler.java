@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TooManyListenersException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -69,6 +70,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(response);
+    }
+
+    @ExceptionHandler(TooManyRequestException.class)
+    public ResponseEntity<ErrorResponse> handleManyRequest(TooManyListenersException exception){
+        ErrorResponse response = new ErrorResponse(
+                LocalDate.now(),
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                "Too Many Request",
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(response);
+
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

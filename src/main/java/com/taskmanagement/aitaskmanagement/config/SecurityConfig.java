@@ -1,5 +1,6 @@
 package com.taskmanagement.aitaskmanagement.config;
 
+import com.taskmanagement.aitaskmanagement.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ public class SecurityConfig {
     private final JWTAuthenticationEnttyPoint jwtAuthenticationEnttyPoint;
 
     private final AuthenticationProvider authenticationProvider;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
@@ -73,7 +75,11 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
-                );
+                )
+                .addFilterBefore(rateLimitFilter,
+                        JwtAuthenticationFilter.class);
+
+
 
        return http.build();
 
