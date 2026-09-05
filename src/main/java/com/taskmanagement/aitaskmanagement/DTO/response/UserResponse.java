@@ -20,4 +20,6 @@ public class UserResponse {
 
     private Long managerId;
 
+    private String presence;
+
 }

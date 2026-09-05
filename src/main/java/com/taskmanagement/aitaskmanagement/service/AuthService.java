@@ -4,6 +4,7 @@ import com.taskmanagement.aitaskmanagement.DTO.request.LoginRequest;
 import com.taskmanagement.aitaskmanagement.DTO.response.AuthResult;
 import com.taskmanagement.aitaskmanagement.DTO.response.JwtResponse;
 import com.taskmanagement.aitaskmanagement.DTO.response.UserResponse;
+import com.taskmanagement.aitaskmanagement.Redis.Presence.PresenceServices;
 import com.taskmanagement.aitaskmanagement.Redis.session.RedisSession;
 import com.taskmanagement.aitaskmanagement.Redis.session.RedisSessionService;
 import com.taskmanagement.aitaskmanagement.entity.User;
@@ -29,6 +30,7 @@ public class AuthService {
     private final JWTService jwtService;
     private final UserRepository userRepository;
     private final RedisSessionService redisSessionService;
+    private final PresenceServices presenceServices;
 
     public AuthResult login(LoginRequest request){
 
@@ -153,12 +155,15 @@ public class AuthService {
             managerId = user.getManager().getId();
         }
 
+        String presence = presenceServices.getLastActive(user.getId());
+
         return UserResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
                 .managerId(managerId)
+                .presence(presence)
                 .build();
     }
 }

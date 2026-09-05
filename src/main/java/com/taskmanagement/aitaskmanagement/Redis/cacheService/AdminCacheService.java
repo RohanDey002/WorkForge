@@ -1,6 +1,7 @@
 package com.taskmanagement.aitaskmanagement.Redis.cacheService;
 
 import com.taskmanagement.aitaskmanagement.DTO.response.UserResponse;
+import com.taskmanagement.aitaskmanagement.Redis.Presence.PresenceServices;
 import com.taskmanagement.aitaskmanagement.entity.User;
 import com.taskmanagement.aitaskmanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ public class AdminCacheService {
 
     private final UserRepository userRepository;
 
+    private final PresenceServices presenceServices;
 
 
     @Cacheable(
@@ -46,12 +48,15 @@ public class AdminCacheService {
         Long manageId = user.getManager()!=null?
                 user.getManager().getId():null;
 
+        String presence = presenceServices.getLastActive(user.getId());
+
         return  UserResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .managerId(manageId)
                 .role(user.getRole())
+                .presence(presence)
                 .build();
     }
 

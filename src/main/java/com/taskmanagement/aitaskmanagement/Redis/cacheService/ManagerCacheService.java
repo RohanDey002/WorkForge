@@ -3,6 +3,7 @@ package com.taskmanagement.aitaskmanagement.Redis.cacheService;
 
 import com.taskmanagement.aitaskmanagement.DTO.response.TaskResponse;
 import com.taskmanagement.aitaskmanagement.DTO.response.UserResponse;
+import com.taskmanagement.aitaskmanagement.Redis.Presence.PresenceServices;
 import com.taskmanagement.aitaskmanagement.entity.Task;
 import com.taskmanagement.aitaskmanagement.entity.User;
 import com.taskmanagement.aitaskmanagement.repository.TaskRepository;
@@ -19,6 +20,7 @@ import java.util.List;
 public class ManagerCacheService {
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
+    private final PresenceServices presenceServices;
 
     @Cacheable(
             cacheNames = "managerEmployees",
@@ -130,6 +132,8 @@ public class ManagerCacheService {
                         ? user.getManager().getId()
                         : null;
 
+        String presence = presenceServices.getLastActive(user.getId());
+
 
         return UserResponse.builder()
 
@@ -142,6 +146,8 @@ public class ManagerCacheService {
                 .role(user.getRole())
 
                 .managerId(managerId)
+
+                .presence(presence)
 
                 .build();
     }

@@ -1,5 +1,7 @@
 package com.taskmanagement.aitaskmanagement.config;
 
+import com.taskmanagement.aitaskmanagement.Redis.Presence.PresenceServices;
+import com.taskmanagement.aitaskmanagement.security.CustomUserDetails;
 import com.taskmanagement.aitaskmanagement.security.CustomUserDetailsService;
 import com.taskmanagement.aitaskmanagement.security.JWTService;
 import jakarta.servlet.FilterChain;
@@ -29,6 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JWTService jwtService;
     private final CustomUserDetailsService userDetailsService;
+    private final PresenceServices presenceServices;
 
 
     @Override
@@ -66,6 +69,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext()
                             .setAuthentication(authenticationToken);
+
+                    if(userDetails instanceof CustomUserDetails customUserDetails){
+                        presenceServices.recordLastActive(customUserDetails.getId());
+                    }
                 }
             }
 

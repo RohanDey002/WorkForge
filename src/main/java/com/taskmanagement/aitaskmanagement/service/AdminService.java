@@ -3,6 +3,7 @@ package com.taskmanagement.aitaskmanagement.service;
 import com.taskmanagement.aitaskmanagement.DTO.request.RegisterEmployeeRequest;
 import com.taskmanagement.aitaskmanagement.DTO.request.RegisterManagerRequest;
 import com.taskmanagement.aitaskmanagement.DTO.response.UserResponse;
+import com.taskmanagement.aitaskmanagement.Redis.Presence.PresenceServices;
 import com.taskmanagement.aitaskmanagement.Redis.cacheService.AdminCacheService;
 import com.taskmanagement.aitaskmanagement.Redis.cacheService.EmployeeCacheService;
 import com.taskmanagement.aitaskmanagement.Redis.cacheService.ManagerCacheService;
@@ -26,6 +27,7 @@ public class AdminService {
     private final AdminCacheService adminCacheService;
     private final ManagerCacheService managerCacheService;
     private final EmployeeCacheService employeeCacheService;
+    private final PresenceServices presenceServices;
 
     public UserResponse createManager(RegisterManagerRequest request){
 
@@ -110,12 +112,15 @@ public class AdminService {
             managerId = user.getManager().getId();
         }
 
+        String presence = presenceServices.getLastActive(user.getId());
+
         return UserResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
                 .managerId(managerId)
+                .presence(presence)
                 .build();
     }
 
