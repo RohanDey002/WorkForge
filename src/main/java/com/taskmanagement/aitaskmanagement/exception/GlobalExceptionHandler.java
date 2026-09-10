@@ -72,20 +72,7 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
-    @ExceptionHandler(TooManyRequestException.class)
-    public ResponseEntity<ErrorResponse> handleManyRequest(TooManyListenersException exception){
-        ErrorResponse response = new ErrorResponse(
-                LocalDate.now(),
-                HttpStatus.TOO_MANY_REQUESTS.value(),
-                "Too Many Request",
-                exception.getMessage()
-        );
 
-        return ResponseEntity
-                .status(HttpStatus.TOO_MANY_REQUESTS)
-                .body(response);
-
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException exception){
@@ -110,11 +97,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public  ResponseEntity<ErrorResponse>genericException(Exception exception){
 
+        exception.printStackTrace();
         ErrorResponse response = new ErrorResponse(
                 LocalDate.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
-                "Something went wrong"
+                exception.getMessage()
         );
 
         return ResponseEntity

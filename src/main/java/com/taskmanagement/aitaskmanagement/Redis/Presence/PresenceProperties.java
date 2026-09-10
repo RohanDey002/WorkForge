@@ -14,4 +14,6 @@ public class PresenceProperties {
     private long onlineThresholdSeconds = 180;
 
     private long ttlDays = 30;
+
+    private long updateIntervalsSeconds = 30;
 }

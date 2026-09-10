@@ -5,6 +5,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -17,9 +21,34 @@ public class PresenceServices {
 
     public void  recordLastActive(Long userId){
 
+        if(userId==null) return;
+
         String key =  buildKey(userId);
 
         Long now = System.currentTimeMillis();
+
+        String existingValue = redisTemplate.opsForValue().get(key);
+
+        if(existingValue!=null){
+
+            try {
+
+                long lastSeen = Long.parseLong(existingValue);
+
+                long difference = now - lastSeen;
+
+                long updateIntervalsMillis = properties.getUpdateIntervalsSeconds()*1000L;
+
+                if(difference<updateIntervalsMillis){
+                    return;
+                }
+
+            } catch (NumberFormatException e) {
+
+                return;
+            }
+
+        }
 
         redisTemplate.opsForValue().set(
                 key,
@@ -31,6 +60,8 @@ public class PresenceServices {
 
     public Long getLastSeen(Long userId){
 
+        if (userId==null) return null;
+
         String key = buildKey(userId);
 
         String value = redisTemplate.opsForValue().get(key);
@@ -40,13 +71,23 @@ public class PresenceServices {
         try {
 
             return Long.parseLong(value);
+
         } catch (NumberFormatException e) {
-            throw new RuntimeException(e);
+
+            return null;
         }
     }
 
-    public String getLastActive(Long userId){
+    public  String getPresence(Long userId){
+
         Long lastSeen = getLastSeen(userId);
+
+        return getLastActive(lastSeen);
+    }
+
+
+    public String getLastActive(Long lastSeen){
+
 
         if(lastSeen==null) return "Last Active : Unknown";
 
@@ -91,6 +132,54 @@ public class PresenceServices {
         return "Last active: "
                 + days
                 + " days ago";
+    }
+
+    public Map<Long,String> getPresenceForUsers(List<Long> userIds){
+
+        if(userIds ==null || userIds.isEmpty()){
+            return Collections.emptyMap();
+        }
+        List<String> keys = userIds.stream()
+                .map(this::buildKey)
+                .toList();
+
+        List<String> values = redisTemplate.opsForValue()
+                .multiGet(keys);
+
+        Map<Long,String> presenceMap = new HashMap<>();
+
+        if (values==null){
+            for (Long userId : userIds){
+                presenceMap.put(userId,
+                        "Last Active: Unknown");
+            }
+
+            return presenceMap;
+        }
+
+        for (int i = 0; i < userIds.size(); i++) {
+
+            Long userId = userIds.get(i);
+
+            String value = i<values.size()?
+                    values.get(i) : null;
+
+
+            Long lastSeen = null;
+
+            if(value!=null){
+                try {
+                    lastSeen = Long.parseLong(value);
+                } catch (NumberFormatException e) {
+
+                }
+            }
+
+            presenceMap.put(userId,getLastActive(lastSeen));
+        }
+
+          return presenceMap;
+
     }
 
 

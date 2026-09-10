@@ -32,6 +32,7 @@ public class AuthService {
     private final RedisSessionService redisSessionService;
     private final PresenceServices presenceServices;
 
+
     public AuthResult login(LoginRequest request){
 
         try {
@@ -52,6 +53,7 @@ public class AuthService {
                         new UnauthorizedException("User not found")
                 );
 
+        presenceServices.recordLastActive(user.getId());
 
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
@@ -112,6 +114,8 @@ public class AuthService {
                 .orElseThrow(()->
                         new ResourceNotFoundException("User not found with email :"+email));
 
+        presenceServices.recordLastActive(user.getId());
+
 
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
@@ -155,7 +159,7 @@ public class AuthService {
             managerId = user.getManager().getId();
         }
 
-        String presence = presenceServices.getLastActive(user.getId());
+
 
         return UserResponse.builder()
                 .id(user.getId())
@@ -163,7 +167,6 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .managerId(managerId)
-                .presence(presence)
                 .build();
     }
 }

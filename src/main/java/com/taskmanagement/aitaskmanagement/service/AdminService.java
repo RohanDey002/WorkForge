@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class AdminService {
     private final ManagerCacheService managerCacheService;
     private final EmployeeCacheService employeeCacheService;
     private final PresenceServices presenceServices;
+
 
     public UserResponse createManager(RegisterManagerRequest request){
 
@@ -77,7 +79,22 @@ public class AdminService {
     }
    public  List<UserResponse> getAllUsers(){
 
-     return adminCacheService.getAllUsers();
+     List<UserResponse> users = adminCacheService.getAllUsers();
+
+     List<Long> userIds = users.stream()
+             .map(UserResponse::getId)
+             .toList();
+
+       Map<Long,String> presnceMap = presenceServices.getPresenceForUsers(userIds);
+
+       users.forEach(userResponse ->
+               userResponse.setPresence(
+                       presnceMap.getOrDefault(userResponse.getId(),
+                               "Last Active : Unknown")
+               ));
+
+       return users;
+
    }
 
    public void deleteUser(Long userId){
@@ -112,7 +129,7 @@ public class AdminService {
             managerId = user.getManager().getId();
         }
 
-        String presence = presenceServices.getLastActive(user.getId());
+
 
         return UserResponse.builder()
                 .id(user.getId())
@@ -120,7 +137,6 @@ public class AdminService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .managerId(managerId)
-                .presence(presence)
                 .build();
     }
 

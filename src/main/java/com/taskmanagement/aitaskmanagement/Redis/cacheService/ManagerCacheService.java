@@ -20,7 +20,7 @@ import java.util.List;
 public class ManagerCacheService {
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
-    private final PresenceServices presenceServices;
+
 
     @Cacheable(
             cacheNames = "managerEmployees",
@@ -132,7 +132,7 @@ public class ManagerCacheService {
                         ? user.getManager().getId()
                         : null;
 
-        String presence = presenceServices.getLastActive(user.getId());
+
 
 
         return UserResponse.builder()
@@ -146,8 +146,6 @@ public class ManagerCacheService {
                 .role(user.getRole())
 
                 .managerId(managerId)
-
-                .presence(presence)
 
                 .build();
     }

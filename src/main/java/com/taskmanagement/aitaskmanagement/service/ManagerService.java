@@ -21,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class ManagerService {
     private final ManagerCacheService managerCacheService;
     private final EmployeeCacheService employeeCacheService;
     private final PresenceServices presenceServices;
+
 
     public TaskResponse assignTask(TaskRequest request){
         User manager = getCurretUser();
@@ -82,7 +84,23 @@ public class ManagerService {
     public List<UserResponse> getEmployees(){
         User manager = getCurretUser();
 
-        return managerCacheService.getEmployees(manager.getId());
+        List<UserResponse> employees = managerCacheService.getEmployees(manager.getId());
+
+        List<Long> employeeIds = employees.stream()
+                .map(UserResponse::getId)
+                .toList();
+
+        Map<Long,String> presenceMap = presenceServices.getPresenceForUsers(employeeIds);
+
+        employees.forEach(userResponse ->
+                userResponse.setPresence(
+                        presenceMap.getOrDefault(
+                                userResponse.getId(),
+                                "Last Active : Unknown"
+                        )
+                ));
+
+        return employees;
     }
 
     private User getCurretUser(){
@@ -118,7 +136,6 @@ public class ManagerService {
     private UserResponse mapToUserResponse(User user){
         Long managerId = user.getManager()!=null? user.getManager().getId():null;
 
-        String presence = presenceServices.getLastActive(user.getId());
 
         return UserResponse.builder()
                 .id(user.getId())
@@ -126,7 +143,6 @@ public class ManagerService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .managerId(managerId)
-                .presence(presence)
                 .build();
     }
 }

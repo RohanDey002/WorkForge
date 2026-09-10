@@ -17,7 +17,7 @@ public class AdminCacheService {
 
     private final UserRepository userRepository;
 
-    private final PresenceServices presenceServices;
+
 
 
     @Cacheable(
@@ -48,7 +48,7 @@ public class AdminCacheService {
         Long manageId = user.getManager()!=null?
                 user.getManager().getId():null;
 
-        String presence = presenceServices.getLastActive(user.getId());
+
 
         return  UserResponse.builder()
                 .id(user.getId())
@@ -56,7 +56,6 @@ public class AdminCacheService {
                 .email(user.getEmail())
                 .managerId(manageId)
                 .role(user.getRole())
-                .presence(presence)
                 .build();
     }
 
