@@ -12,6 +12,8 @@ import com.taskmanagement.aitaskmanagement.entity.TaskStatus;
 import com.taskmanagement.aitaskmanagement.entity.User;
 import com.taskmanagement.aitaskmanagement.exception.ForbiddenException;
 import com.taskmanagement.aitaskmanagement.exception.ResourceNotFoundException;
+import com.taskmanagement.aitaskmanagement.kafka.event.TaskAssignEvent;
+import com.taskmanagement.aitaskmanagement.kafka.producer.TaskEventProducer;
 import com.taskmanagement.aitaskmanagement.repository.TaskRepository;
 import com.taskmanagement.aitaskmanagement.repository.UserRepository;
 import com.taskmanagement.aitaskmanagement.security.CustomUserDetails;
@@ -32,6 +34,7 @@ public class ManagerService {
     private final ManagerCacheService managerCacheService;
     private final EmployeeCacheService employeeCacheService;
     private final PresenceServices presenceServices;
+    private final TaskEventProducer taskEventProducer;
 
 
     public TaskResponse assignTask(TaskRequest request){
@@ -63,12 +66,25 @@ public class ManagerService {
                 .assignedTo(employee)
                 .build();
 
+        //Save to DB
         Task savedtask = taskRepository.save(task);
 
+        //Cache operation
         employeeCacheService.evictEmployeeTask(employee.getId());
 
         managerCacheService.evictTasks(manager.getId());
 
+        //kafka event publish
+        TaskAssignEvent event = TaskAssignEvent.builder()
+                .taskId(savedtask.getId())
+                .taskTitle(savedtask.getTitle())
+                .assignedById(manager.getId())
+                .assignedByName(manager.getName())
+                .assignedToId(employee.getId())
+                .assignedToName(employee.getName())
+                .build();
+
+        taskEventProducer.publishTaskAssigned(event);
 
         return mapToTaskResponse(savedtask);
 
