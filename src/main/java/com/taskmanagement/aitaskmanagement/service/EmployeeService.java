@@ -8,8 +8,12 @@ import com.taskmanagement.aitaskmanagement.entity.TaskStatus;
 import com.taskmanagement.aitaskmanagement.entity.User;
 import com.taskmanagement.aitaskmanagement.exception.ForbiddenException;
 import com.taskmanagement.aitaskmanagement.exception.ResourceNotFoundException;
+import com.taskmanagement.aitaskmanagement.kafka.event.TaskUpdateEvent;
+import com.taskmanagement.aitaskmanagement.kafka.producer.TaskUpdateProducer;
 import com.taskmanagement.aitaskmanagement.repository.TaskRepository;
+import com.taskmanagement.aitaskmanagement.repository.UserRepository;
 import com.taskmanagement.aitaskmanagement.security.CustomUserDetails;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +28,8 @@ public class EmployeeService {
     private final TaskRepository taskRepository;
     private final EmployeeCacheService employeeCacheService;
     private final ManagerCacheService managerCacheService;
+    private final TaskUpdateProducer taskUpdateProducer;
+    private final UserRepository userRepository;
 
     public List<TaskResponse> getMyTasks(){
 
@@ -32,9 +38,17 @@ public class EmployeeService {
         return employeeCacheService.getEmployeeTasks(employee.getId());
     }
 
+    @Transactional
     public TaskResponse updateTask(Long taskid, String status){
 
-        User employee = getCurrentUser();
+        User authenticatedUser = getCurrentUser();
+
+            User employee = userRepository.findByIdWithManager(authenticatedUser.getId())
+                    .orElseThrow(()->
+                            new RuntimeException( "User Not Found"));
+
+            User manager = employee.getManager();
+
 
         Task task = taskRepository.findById(taskid)
                 .orElseThrow(()->
@@ -45,6 +59,8 @@ public class EmployeeService {
                 .equals(employee.getId())){
             throw  new ForbiddenException("You cannot update other's tasks");
         }
+
+        TaskStatus oldStatus = task.getStatus();
 
         TaskStatus taskStatus;
 
@@ -62,6 +78,19 @@ public class EmployeeService {
         employeeCacheService.evictEmployeeTask(employee.getId());
 
         managerCacheService.evictTasks(employee.getManager().getId());
+
+        TaskUpdateEvent event = TaskUpdateEvent.builder()
+                .taskId(updatedTask.getId())
+                .taskTitle(updatedTask.getTitle())
+                .employeeId(employee.getId())
+                .employeeName(employee.getName())
+                .managerId(manager.getId())
+                .managerName(manager.getName())
+                .oldStatus(oldStatus.name())
+                .newStatus(taskStatus.name())
+                .build();
+
+        taskUpdateProducer.publishTaskUpdated(event);
 
 
         return mapToTaskResponse(updatedTask);
