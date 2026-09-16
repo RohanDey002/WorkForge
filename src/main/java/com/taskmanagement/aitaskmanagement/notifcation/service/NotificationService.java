@@ -1,6 +1,7 @@
 package com.taskmanagement.aitaskmanagement.notifcation.service;
 
 
+import com.taskmanagement.aitaskmanagement.kafka.event.EmployeeAssignEvent;
 import com.taskmanagement.aitaskmanagement.kafka.event.TaskAssignEvent;
 import com.taskmanagement.aitaskmanagement.kafka.event.TaskUpdateEvent;
 import com.taskmanagement.aitaskmanagement.notifcation.entity.Notification;
@@ -40,6 +41,20 @@ public class NotificationService {
                 +" to "
                 +event.getNewStatus();
 
+
+        Notification notification = Notification.builder()
+                .recipientId(event.getManagerId())
+                .message(message)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    public void createEmployeeAssignNotification(EmployeeAssignEvent event){
+
+        String message ="Employee "
+                +event.getEmployeeName()
+                +" has been assign to you";
 
         Notification notification = Notification.builder()
                 .recipientId(event.getManagerId())

@@ -11,6 +11,8 @@ import com.taskmanagement.aitaskmanagement.entity.Role;
 import com.taskmanagement.aitaskmanagement.entity.User;
 import com.taskmanagement.aitaskmanagement.exception.BadRequestException;
 import com.taskmanagement.aitaskmanagement.exception.ResourceNotFoundException;
+import com.taskmanagement.aitaskmanagement.kafka.event.EmployeeAssignEvent;
+import com.taskmanagement.aitaskmanagement.kafka.producer.EmployeeAssignProducer;
 import com.taskmanagement.aitaskmanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +31,7 @@ public class AdminService {
     private final ManagerCacheService managerCacheService;
     private final EmployeeCacheService employeeCacheService;
     private final PresenceServices presenceServices;
+    private final EmployeeAssignProducer employeeAssignProducer;
 
 
     public UserResponse createManager(RegisterManagerRequest request){
@@ -74,6 +77,16 @@ public class AdminService {
         managerCacheService.evictEmployees(manager.getId());
 
         adminCacheService.evictUsers();
+
+        EmployeeAssignEvent event = EmployeeAssignEvent.builder()
+                .employeeId(savedEmployee.getId())
+                .employeeName(savedEmployee.getName())
+                .managerId(manager.getId())
+                .managerName(manager.getName())
+                .build();
+
+        employeeAssignProducer.publishEmployeeAssign(event);
+
 
         return mapToUserResponse(savedEmployee);
     }
