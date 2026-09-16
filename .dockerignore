@@ -6,4 +6,3 @@ target/
 *.iml
 *.log
 .env
-README.md
